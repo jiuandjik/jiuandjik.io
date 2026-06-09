@@ -1,0 +1,2222 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Heart, 
+  Calendar, 
+  Plus, 
+  TrendingUp, 
+  Activity, 
+  Settings, 
+  MessageSquare, 
+  BookOpen, 
+  Droplet, 
+  Scale, 
+  Award, 
+  ChevronRight, 
+  Sparkles, 
+  Trash2, 
+  User, 
+  ArrowRight,
+  CheckCircle,
+  AlertCircle,
+  FileText,
+  Calculator,
+  BrainCircuit,
+  ClipboardList,
+  Volume2,
+  VolumeX,
+  ShieldAlert,
+  Search,
+  ChefHat,
+  Play,
+  RotateCcw
+} from 'lucide-react';
+import { 
+  LineChart, 
+  Line, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from 'recharts';
+
+// 預設寵物數據
+const DEFAULT_PETS = [
+  {
+    id: 'pet-3',
+    name: 'jiu',
+    type: 'cat',
+    breed: '狸花貓',
+    age: '1 歲',
+    weight: 4.3,
+    status: 'neutered', // 已結紮
+    targetCalories: 400, // 截圖所設之目標
+    targetWater: 300,    // 截圖所設之目標
+    avatar: '🐈',
+    birthdate: '2025-06-01',
+    personality: '聰明活潑，好奇心旺盛的狸花貓，對流動的水特別感興趣。'
+  },
+  {
+    id: 'pet-1',
+    name: '麻吉 (Mochi)',
+    type: 'dog',
+    breed: '柴犬',
+    age: '2 歲 5 個月',
+    weight: 9.8,
+    status: 'neutered',
+    targetCalories: 580,
+    targetWater: 588,
+    avatar: '🐕',
+    birthdate: '2023-12-15',
+    personality: '固執但溫柔的柴犬，外出散步時非常有活力。'
+  },
+  {
+    id: 'pet-2',
+    name: '露娜 (Luna)',
+    type: 'cat',
+    breed: '布偶貓',
+    age: '1 歲 2 個月',
+    weight: 4.2,
+    status: 'neutered',
+    targetCalories: 246,
+    targetWater: 210,
+    avatar: '🐈',
+    birthdate: '2025-04-01',
+    personality: '黏人溫順的小公主，食量比較秀氣。'
+  }
+];
+
+// 預設飲食紀錄
+const DEFAULT_MEALS = [
+  { id: 'm-1', petId: 'pet-1', date: '2026-06-09', time: '08:00', type: '飼料', name: '紐頓無穀犬糧', amount: 80, calories: 310, note: '胃口很好，全部吃光' },
+  { id: 'm-2', petId: 'pet-1', date: '2026-06-09', time: '18:30', type: '鮮食', name: '自製雞胸肉鮮食', amount: 120, calories: 290, note: '加了少許鮭魚油' },
+  { id: 'm-3', petId: 'pet-2', date: '2026-06-09', time: '07:30', type: '罐頭', name: '汪喵星球主食罐-雞肉', amount: 85, calories: 95, note: '留了一口沒吃完' },
+  { id: 'm-4', petId: 'pet-2', date: '2026-06-09', time: '19:00', type: '飼料', name: '渴望貓糧', amount: 35, calories: 140, note: '主食罐搭配少許乾乾' },
+  { id: 'm-5', petId: 'pet-3', date: '2026-06-09', time: '08:00', type: '罐頭', name: '鮮肉主食罐', amount: 80, calories: 120, note: '早上很有胃口' },
+  { id: 'm-6', petId: 'pet-3', date: '2026-06-08', time: '08:00', type: '飼料', name: '幼貓無穀乾糧', amount: 40, calories: 160, note: '正常攝食' },
+  { id: 'm-7', petId: 'pet-3', date: '2026-06-08', time: '19:00', type: '罐頭', name: '純肉主食罐', amount: 90, calories: 135, note: '吃得很乾淨' }
+];
+
+// 預設健康紀錄
+const DEFAULT_HEALTH_LOGS = [
+  { id: 'h-1', petId: 'pet-1', date: '2026-06-09', water: 550, weight: 9.8, stool: '正常', note: '大便形狀完美，成條狀狀' },
+  { id: 'h-2', petId: 'pet-1', date: '2026-06-08', water: 580, weight: 9.75, stool: '偏軟', note: '可能跟晚上吃太多罐頭有關' },
+  { id: 'h-3', petId: 'pet-2', date: '2026-06-09', water: 210, weight: 4.2, stool: '正常', note: '水碗換新，有比平時多喝一點' },
+  { id: 'h-4', petId: 'pet-3', date: '2026-06-09', water: 150, weight: 4.3, stool: '正常', note: '今日活潑，排便良好' },
+  { id: 'h-5', petId: 'pet-3', date: '2026-06-08', water: 180, weight: 4.28, stool: '正常', note: '喝水量適中' },
+  { id: 'h-6', petId: 'pet-3', date: '2026-06-07', water: 130, weight: 4.25, stool: '偏軟', note: '稍微有點軟便，可能冷氣吹太冷' },
+  { id: 'h-7', petId: 'pet-3', date: '2026-06-06', water: 160, weight: 4.25, stool: '正常', note: '食慾與精神都極佳' },
+  { id: 'h-8', petId: 'pet-3', date: '2026-06-05', water: 140, weight: 4.2, stool: '正常', note: '體重穩定上升中' }
+];
+
+// Base64 轉換成 ArrayBuffer
+function base64ToArrayBuffer(base64) {
+  const binaryString = window.atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes.buffer;
+}
+
+// 將 PCM 16-bit 音訊封裝進 WAV 容器，以便瀏覽器直接播放
+function pcmToWav(pcm16, sampleRate) {
+  const buffer = new ArrayBuffer(44 + pcm16.length * 2);
+  const view = new DataView(buffer);
+
+  // RIFF 識別碼
+  writeString(view, 0, 'RIFF');
+  // 檔案長度
+  view.setUint32(4, 36 + pcm16.length * 2, true);
+  // RIFF 格式類型
+  writeString(view, 8, 'WAVE');
+  // 格式區塊識別碼
+  writeString(view, 12, 'fmt ');
+  // 格式區塊長度
+  view.setUint32(16, 16, true);
+  // 音訊編碼格式 (1 表示無壓縮的 PCM)
+  view.setUint16(20, 1, true);
+  // 聲道數 (單聲道)
+  view.setUint16(22, 1, true);
+  // 採樣率
+  view.setUint32(24, sampleRate, true);
+  // 每秒位元組率 (採樣率 * 聲道數 * 每個採樣位元組數)
+  view.setUint32(28, sampleRate * 2, true);
+  // 區塊對齊 (聲道數 * 每個採樣位元組數)
+  view.setUint16(32, 2, true);
+  // 每個採樣位元數
+  view.setUint16(34, 16, true);
+  // 數據區塊識別碼
+  writeString(view, 36, 'data');
+  // 數據區塊長度
+  view.setUint32(40, pcm16.length * 2, true);
+
+  // 寫入原始 PCM 音訊數據
+  for (let i = 0; i < pcm16.length; i++) {
+    view.setInt16(44 + i * 2, pcm16[i], true);
+  }
+
+  return new Blob([buffer], { type: 'audio/wav' });
+}
+
+function writeString(view, offset, string) {
+  for (let i = 0; i < string.length; i++) {
+    view.setUint8(offset + i, string.charCodeAt(i));
+  }
+}
+
+function calculateScientificTargets(type, weight, status) {
+  const w = Number(weight);
+  if (!w || isNaN(w) || w <= 0) return { rer: 0, calories: 0, water: 0 };
+  
+  const rer = Math.round(70 * Math.pow(w, 0.75));
+  let factor = 1.2;
+  if (type === 'dog') {
+    switch (status) {
+      case 'neutered': factor = 1.6; break;
+      case 'intact': factor = 1.8; break;
+      case 'weight_loss': factor = 1.0; break;
+      case 'young': factor = 2.5; break;
+      default: factor = 1.6;
+    }
+  } else { // cat
+    switch (status) {
+      case 'neutered': factor = 1.2; break;
+      case 'intact': factor = 1.4; break;
+      case 'weight_loss': factor = 0.8; break;
+      case 'young': factor = 2.0; break;
+      default: factor = 1.2;
+    }
+  }
+  const calories = Math.round(rer * factor);
+  const water = Math.round(type === 'dog' ? w * 60 : w * 50);
+  return { rer, calories, water };
+}
+
+// 萬用 Gemini-3 文字模型 API 呼叫方法
+async function callGeminiAPI(prompt, systemInstruction) {
+  const apiKey = ""; // 執行環境會在運行時自動注入此金鑰
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+  
+  const payload = {
+    contents: [{ parts: [{ text: prompt }] }],
+    systemInstruction: {
+      parts: [{ text: systemInstruction }]
+    }
+  };
+
+  let delay = 1000;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        return result.candidates?.[0]?.content?.parts?.[0]?.text || "抱歉，無法取得有效回覆。";
+      }
+      
+      if (response.status === 429 || response.status >= 500) {
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2;
+        continue;
+      }
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `HTTP 錯誤：${response.status}`);
+    } catch (error) {
+      if (attempt === 4) throw error;
+      await new Promise(resolve => setTimeout(resolve, delay));
+      delay *= 2;
+    }
+  }
+  throw new Error("無法連線至 Gemini API。");
+}
+
+// 呼叫 Gemini 2.5 TTS 生成 PCM 語音
+async function callGeminiTTS(textToSay, voiceName = "Zephyr") {
+  const apiKey = "";
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+  const payload = {
+    contents: [{
+      parts: [{ text: `用親切、溫柔、充滿關懷的寵物營養教練口氣朗讀這段話：${textToSay}` }]
+    }],
+    generationConfig: {
+      responseModalities: ["AUDIO"],
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: { voiceName: voiceName } // Zephyr 為開朗陽光，Puck 為輕快活潑
+        }
+      }
+    }
+  };
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      const part = result?.candidates?.[0]?.content?.parts?.[0];
+      const audioData = part?.inlineData?.data;
+      const mimeType = part?.inlineData?.mimeType;
+
+      if (audioData && mimeType && mimeType.startsWith("audio/")) {
+        // 從 mimeType 提取 sampleRate (通常為 24000)
+        const match = mimeType.match(/rate=(\d+)/);
+        const sampleRate = match ? parseInt(match[1], 10) : 24000;
+        
+        const rawPcmBuffer = base64ToArrayBuffer(audioData);
+        const pcm16 = new Int16Array(rawPcmBuffer);
+        const wavBlob = pcmToWav(pcm16, sampleRate);
+        return URL.createObjectURL(wavBlob);
+      }
+    }
+    throw new Error("無法取得語音音訊串流。");
+  } catch (err) {
+    console.error("TTS Error:", err);
+    throw err;
+  }
+}
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [pets, setPets] = useState(DEFAULT_PETS);
+  const [activePetId, setActivePetId] = useState('pet-3'); // 預設為貓咪 jiu
+  const [meals, setMeals] = useState(DEFAULT_MEALS);
+  const [healthLogs, setHealthLogs] = useState(DEFAULT_HEALTH_LOGS);
+  
+  // 彈窗與表單狀態
+  const [showAddMealModal, setShowAddMealModal] = useState(false);
+  const [mealForm, setMealForm] = useState({
+    time: '08:00',
+    type: '飼料',
+    name: '',
+    amount: '',
+    calories: '',
+    note: ''
+  });
+
+  const [showAddHealthModal, setShowAddHealthModal] = useState(false);
+  const [healthForm, setHealthForm] = useState({
+    water: '',
+    weight: '',
+    stool: '正常',
+    note: ''
+  });
+
+  const [showAddPetModal, setShowAddPetModal] = useState(false);
+  const [petForm, setPetForm] = useState({
+    name: '',
+    type: 'dog',
+    breed: '',
+    age: '',
+    weight: '',
+    status: 'neutered',
+    targetCalories: '',
+    targetWater: '',
+    avatar: '🐾'
+  });
+
+  const [scientificPreview, setScientificPreview] = useState({ rer: 0, calories: 0, water: 0 });
+
+  useEffect(() => {
+    if (petForm.weight) {
+      const results = calculateScientificTargets(petForm.type, petForm.weight, petForm.status);
+      setScientificPreview(results);
+    } else {
+      setScientificPreview({ rer: 0, calories: 0, water: 0 });
+    }
+  }, [petForm.weight, petForm.type, petForm.status]);
+
+  // AI 諮詢副功能 Tab 狀態
+  const [aiSubTab, setAiSubTab] = useState('chat'); // 'chat' | 'food_safety' | 'recipe_maker'
+
+  // AI 功能相關狀態
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [chatHistory, setChatHistory] = useState([
+    {
+      role: 'assistant',
+      text: '你好！我是你的 AI 寵物營養師 🌟。我已經讀取了你當前選擇的寵物檔案，你可以隨時問我類似：「如何幫牠減重？」、「自製雞胸肉鮮食熱量怎麼算？」或「這樣的飲水量足夠嗎？」等問題！'
+    }
+  ]);
+
+  // AI 食材安全掃描器狀態
+  const [foodQuery, setFoodQuery] = useState('');
+  const [foodScanResult, setFoodScanResult] = useState(null);
+  const [isFoodScanning, setIsFoodScanning] = useState(false);
+
+  // AI 鮮食食譜調配器狀態
+  const [recipeGoal, setRecipeGoal] = useState('泌尿保健');
+  const [selectedIngredients, setSelectedIngredients] = useState([]);
+  const [customIngredients, setCustomIngredients] = useState('');
+  const [generatedRecipe, setGeneratedRecipe] = useState('');
+  const [isRecipeGenerating, setIsRecipeGenerating] = useState(false);
+
+  // AI 動態語音點評教練狀態
+  const [coachAdvice, setCoachAdvice] = useState('貓咪屬於口渴敏感度低的動物。目前水分攝取還差一些才達標。建議將一部分乾飼料改為副食罐加水灌食，或者在家中多放置幾處流動水水碗喔！');
+  const [isCoachLoading, setIsCoachLoading] = useState(false);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const audioPlayerRef = useRef(null);
+
+  // ✨ 今日下一餐 AI 建議狀態
+  const [nextMealAdvice, setNextMealAdvice] = useState('');
+  const [isNextMealLoading, setIsNextMealLoading] = useState(false);
+
+  // ✨ 健康趨勢 AI 診斷報告狀態
+  const [healthReport, setHealthReport] = useState('');
+  const [isHealthReportLoading, setIsHealthReportLoading] = useState(false);
+
+  // ✨ 寵物個性特徵動態生成狀態
+  const [isPersonalityLoading, setIsPersonalityLoading] = useState(false);
+
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const triggerToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3500);
+  };
+
+  const currentPet = pets.find(p => p.id === activePetId) || pets[0];
+
+  // 取得當前寵物的篩選數據
+  const petMeals = meals.filter(m => m.petId === activePetId).sort((a, b) => b.date.localeCompare(a.date) || b.time.localeCompare(a.time));
+  const petHealthLogs = healthLogs.filter(h => h.petId === activePetId).sort((a, b) => b.date.localeCompare(a.date));
+
+  // 計算今日累計 (以最新的一天 2026-06-09 為例)
+  const todayStr = '2026-06-09';
+  const todayMeals = petMeals.filter(m => m.date === todayStr);
+  const todayCalories = todayMeals.reduce((sum, m) => sum + Number(m.calories || 0), 0);
+  
+  const todayHealthLog = petHealthLogs.find(h => h.date === todayStr) || { water: 0, weight: currentPet.weight, stool: '無紀錄' };
+  const todayWater = Number(todayHealthLog.water || 0);
+
+  // 處理新增飲食
+  const handleAddMeal = (e) => {
+    e.preventDefault();
+    if (!mealForm.name || !mealForm.amount || !mealForm.calories) {
+      triggerToast('⚠️ 請填寫完整飲食欄位！');
+      return;
+    }
+    const newMeal = {
+      id: `m-${Date.now()}`,
+      petId: activePetId,
+      date: todayStr,
+      ...mealForm,
+      amount: Number(mealForm.amount),
+      calories: Number(mealForm.calories)
+    };
+    setMeals([newMeal, ...meals]);
+    setShowAddMealModal(false);
+    setMealForm({ time: '08:00', type: '飼料', name: '', amount: '', calories: '', note: '' });
+    triggerToast('🎉 飲食記錄新增成功！');
+  };
+
+  // 處理新增健康紀錄
+  const handleAddHealth = (e) => {
+    e.preventDefault();
+    if (!healthForm.water && !healthForm.weight) {
+      triggerToast('⚠️ 請至少填寫飲水量或體重其中一項！');
+      return;
+    }
+    
+    const existingIndex = healthLogs.findIndex(h => h.petId === activePetId && h.date === todayStr);
+    const updatedForm = {
+      water: healthForm.water ? Number(healthForm.water) : (existingIndex >= 0 ? healthLogs[existingIndex].water : 0),
+      weight: healthForm.weight ? Number(healthForm.weight) : (existingIndex >= 0 ? healthLogs[existingIndex].weight : currentPet.weight),
+      stool: healthForm.stool,
+      note: healthForm.note
+    };
+
+    if (existingIndex >= 0) {
+      const updatedLogs = [...healthLogs];
+      updatedLogs[existingIndex] = {
+        ...updatedLogs[existingIndex],
+        ...updatedForm
+      };
+      setHealthLogs(updatedLogs);
+    } else {
+      const newLog = {
+        id: `h-${Date.now()}`,
+        petId: activePetId,
+        date: todayStr,
+        ...updatedForm
+      };
+      setHealthLogs([newLog, ...healthLogs]);
+    }
+
+    if (healthForm.weight) {
+      setPets(pets.map(p => {
+        if (p.id === activePetId) {
+          const recs = calculateScientificTargets(p.type, healthForm.weight, p.status || 'neutered');
+          return { 
+            ...p, 
+            weight: Number(healthForm.weight),
+            targetCalories: recs.calories,
+            targetWater: recs.water
+          };
+        }
+        return p;
+      }));
+    }
+
+    setShowAddHealthModal(false);
+    setHealthForm({ water: '', weight: '', stool: '正常', note: '' });
+    triggerToast('💚 生理健康數據更新成功！');
+  };
+
+  // 處理新增寵物
+  const handleAddPet = (e) => {
+    e.preventDefault();
+    if (!petForm.name || !petForm.breed || !petForm.weight) {
+      triggerToast('⚠️ 請填寫寵物基本必填資料！');
+      return;
+    }
+    
+    const finalCalories = petForm.targetCalories || scientificPreview.calories || 400;
+    const finalWater = petForm.targetWater || scientificPreview.water || 300;
+
+    const newPet = {
+      id: `pet-${Date.now()}`,
+      name: petForm.name,
+      type: petForm.type,
+      breed: petForm.breed,
+      age: petForm.age || '未知',
+      weight: Number(petForm.weight),
+      status: petForm.status,
+      targetCalories: Number(finalCalories),
+      targetWater: Number(finalWater),
+      avatar: petForm.type === 'dog' ? '🐶' : '🐱',
+      personality: '尚未生成性格描述，點擊左側「✨ 生成個性特徵」以獲取！'
+    };
+    setPets([...pets, newPet]);
+    setActivePetId(newPet.id);
+    setShowAddPetModal(false);
+    setPetForm({ name: '', type: 'dog', breed: '', age: '', weight: '', status: 'neutered', targetCalories: '', targetWater: '', avatar: '🐾' });
+    triggerToast(`❤️ 歡迎新成員 ${newPet.name} 加入！已為其配置科學標準建議。`);
+  };
+
+  const applyScientificValues = () => {
+    if (!petForm.weight) {
+      triggerToast('⚠️ 請先輸入寵物體重以計算公式！');
+      return;
+    }
+    setPetForm({
+      ...petForm,
+      targetCalories: scientificPreview.calories,
+      targetWater: scientificPreview.water
+    });
+    triggerToast('💡 已成功填入 AI 科學公式建議值！');
+  };
+
+  // 食物安全掃描器
+  const handleFoodScan = async (e) => {
+    e.preventDefault();
+    if (!foodQuery.trim()) return;
+
+    setIsFoodScanning(true);
+    setFoodScanResult(null);
+
+    const systemPrompt = `你是一個資深的貓狗食品安全顧問與植物毒物學家。
+請分析用戶輸入的食材名稱，判斷該食材對於貓咪和狗狗的食用安全性。
+你必須輸出一個 JSON 格式的回答（不要帶有 markdown，直接返回合法的 JSON 字符串，或者格式為：
+{
+  "food": "食材名稱",
+  "safetyLevel": "Safe" | "Caution" | "Toxic",
+  "levelColor": "green" | "yellow" | "red",
+  "summary": "一句話總結是否可以吃",
+  "dogSafety": "詳細對狗狗的安全性、中毒反應及安全攝取量建議",
+  "catSafety": "詳細對貓咪的安全性、中毒反應及安全攝取量建議",
+  "nutrients": "有益的營養成分或危害物質說明"
+}
+確保格式完全正確，方便程序直接解析。`;
+
+    try {
+      const responseText = await callGeminiAPI(
+        `請分析食材：「${foodQuery}」`,
+        systemPrompt
+      );
+      
+      // 兼容 JSON 解析
+      let cleanJsonText = responseText.trim();
+      if (cleanJsonText.startsWith("```json")) {
+        cleanJsonText = cleanJsonText.replace(/```json/g, "").replace(/```/g, "").trim();
+      }
+      const data = JSON.parse(cleanJsonText);
+      setFoodScanResult(data);
+    } catch (err) {
+      triggerToast(`⚠️ 分析食材時出錯：${err.message}`);
+      setFoodScanResult({
+        food: foodQuery,
+        safetyLevel: "Caution",
+        levelColor: "yellow",
+        summary: "無法完成深度安全性掃描，請餵食前諮詢實體獸醫。",
+        dogSafety: "請注意可能存在的潛在風險，避免給狗狗餵食不明食材。",
+        catSafety: "貓咪腸胃較為敏感，不要輕易餵食未確認安全的食物。",
+        nutrients: "未提供"
+      });
+    } finally {
+      setIsFoodScanning(false);
+    }
+  };
+
+  // AI 訂製鮮食食譜生成
+  const handleGenerateRecipe = async () => {
+    setIsRecipeGenerating(true);
+    setGeneratedRecipe('');
+
+    const ingredientsStr = selectedIngredients.join(', ') + (customIngredients ? `, ${customIngredients}` : '');
+    const systemPrompt = `你是一位專業的寵物自製鮮食食譜營養調配大師。
+請根據寵物的目標（例如：泌尿保健、增肌等）與提供的手邊食材，為寵物（姓名：${currentPet.name}，體重：${currentPet.weight} kg，熱量目標：${currentPet.targetCalories} kcal）調配出一份完美配比的點心或一餐鮮食食譜。
+你的回答必須包含：
+1. 💡 點評這套食材如何支持「${recipeGoal}」目標。
+2. 🍽️ 精準食材配比（單位：克 g）與熱量佔比（需控制在今日目標內）。
+3. 🍳 詳細的烹煮方法（少鹽無油、低溫熟化等原則）。
+4. ⚠️ 餵食注意事項與過敏原提醒。`;
+
+    const prompt = `寵物名稱：${currentPet.name} (${currentPet.type === 'cat' ? '貓' : '狗'})
+體重：${currentPet.weight} kg
+調配目標：${recipeGoal}
+現有食材：${ingredientsStr}`;
+
+    try {
+      const recipe = await callGeminiAPI(prompt, systemPrompt);
+      setGeneratedRecipe(recipe);
+    } catch (err) {
+      setGeneratedRecipe(`⚠️ 食譜調配出錯：${err.message}`);
+    } finally {
+      setIsRecipeGenerating(false);
+    }
+  };
+
+  // 觸發 AI 教練一鍵點評並播放語音簡報
+  const generateVoiceBriefing = async () => {
+    setIsCoachLoading(true);
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+    }
+    setIsPlayingAudio(false);
+
+    const systemPrompt = `你是一位極具親和力、擁有十幾年經驗的寵物健康諮詢教練。
+請根據目前寵物（姓名：${currentPet.name}，目標熱量：${currentPet.targetCalories} kcal，目標飲水：${currentPet.targetWater} ml）今日的實際攝取數據，生成一段大約 60 到 80 字有溫度、體貼實用的「教練叮嚀」。
+要求：
+1. 分析今天還剩餘多少熱量和飲水量缺口。
+2. 用繁體中文，親切好懂。不要使用 markdown 語法，僅輸出純文字以便語音朗讀。
+3. 範例：「哈囉！我是 ${currentPet.name} 的專屬教練，今天的水分目前攝取了 ${todayWater} 毫升，距離目標還差一點點喔！建議可以在罐罐裡加點水，今天大便很健康，繼續保持喔！」`;
+
+    const prompt = `寵物：${currentPet.name} (體重：${currentPet.weight}kg, 種類：${currentPet.type})
+今日累計進食熱量：${todayCalories} kcal (目標：${currentPet.targetCalories} kcal)
+今日累計飲水量：${todayWater} ml (目標：${currentPet.targetWater} ml)
+今日排便：${todayHealthLog.stool}`;
+
+    try {
+      const textAdvice = await callGeminiAPI(prompt, systemPrompt);
+      setCoachAdvice(textAdvice);
+
+      // 調用 TTS 生成音訊
+      const voiceUrl = await callGeminiTTS(textAdvice);
+      setAudioUrl(voiceUrl);
+      
+      // 自動播放
+      setTimeout(() => {
+        if (audioPlayerRef.current) {
+          audioPlayerRef.current.src = voiceUrl;
+          audioPlayerRef.current.play()
+            .then(() => setIsPlayingAudio(true))
+            .catch(e => console.error("Play failed:", e));
+        }
+      }, 300);
+
+      triggerToast('🔊 AI 語音教練已經為您生成了本日叮嚀！');
+    } catch (err) {
+      triggerToast(`⚠️ 語音簡報生成失敗：${err.message}`);
+    } finally {
+      setIsCoachLoading(false);
+    }
+  };
+
+  // 播放與暫停語音控制
+  const togglePlayAudio = () => {
+    if (!audioPlayerRef.current || !audioUrl) return;
+    if (isPlayingAudio) {
+      audioPlayerRef.current.pause();
+      setIsPlayingAudio(false);
+    } else {
+      audioPlayerRef.current.play()
+        .then(() => setIsPlayingAudio(true))
+        .catch(err => console.error(err));
+    }
+  };
+
+  // 呼叫 AI 營養師對話
+  const handleAskAi = async (e) => {
+    e.preventDefault();
+    if (!aiPrompt.trim()) return;
+
+    const userMessage = { role: 'user', text: aiPrompt };
+    setChatHistory(prev => [...prev, userMessage]);
+    const currentQuestion = aiPrompt;
+    setAiPrompt('');
+    setIsAiLoading(true);
+
+    const systemPrompt = `你是一位專業的寵物營養學家與獸醫膳食專家。
+請根據用戶提供關於他們寵物（姓名：${currentPet.name}，種類：${currentPet.type === 'cat' ? '貓' : '狗'}，品種：${currentPet.breed}，年齡：${currentPet.age}，體重：${currentPet.weight}kg）的健康與飲食提問，給出專業、實用、細緻的解答。
+請特別注意：
+1. 熱量計算與飲食成分平衡。
+2. 以 Markdown 呈現，多用表格、粗體與表情符號提升易讀性。
+3. 提示不適合該寵物的有害成分。`;
+
+    try {
+      const reply = await callGeminiAPI(currentQuestion, systemPrompt);
+      setChatHistory(prev => [...prev, { role: 'assistant', text: reply }]);
+    } catch (err) {
+      setChatHistory(prev => [...prev, { 
+        role: 'assistant', 
+        text: `⚠️ 呼叫 AI 時出錯：${err.message}。請確認您的網路環境是否正常。` 
+      }]);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  // ✨ Gemini 核心整合：一鍵分析今日飲食，推薦下一餐
+  const generateNextMealAdvice = async () => {
+    setIsNextMealLoading(true);
+    setNextMealAdvice('');
+
+    const remainingCalories = currentPet.targetCalories - todayCalories;
+    const remainingWater = currentPet.targetWater - todayWater;
+    const foodHistory = todayMeals.map(m => `${m.time} 吃下 ${m.name} (${m.amount}g, ${m.calories}kcal)`).join('; ') || '無進食紀錄';
+
+    const systemPrompt = `你是一位寵物客製化膳食調配大師。
+任務是分析寵物今日的卡路里和水分攝取進度，設計「今日下一餐（晚餐或點心）」的完美配方克數及水分補給技巧。
+請用繁體中文回答，包含：
+1. 目標進度檢視與營養缺口分析。
+2. 一個具體、易調配的食材配方（如：鮮雞肉+水分比例）。
+3. ✨ 貼心的餵食叮嚀。`;
+
+    const prompt = `寵物名稱：${currentPet.name} (${currentPet.type === 'cat' ? '貓' : '狗'} / 品種：${currentPet.breed})
+當前體重：${currentPet.weight} kg
+今日目標卡路里：${currentPet.targetCalories} kcal (已攝取：${todayCalories} kcal, 剩餘缺口：${remainingCalories} kcal)
+今日目標飲水量：${currentPet.targetWater} ml (已攝取：${todayWater} ml, 剩餘缺口：${remainingWater} ml)
+今日進食歷史：${foodHistory}`;
+
+    try {
+      const advice = await callGeminiAPI(prompt, systemPrompt);
+      setNextMealAdvice(advice);
+    } catch (err) {
+      setNextMealAdvice(`⚠️ 無法生成建議：${err.message}`);
+    } finally {
+      setIsNextMealLoading(false);
+    }
+  };
+
+  // ✨ Gemini 核心整合：生成5日健康趨勢分析診斷書
+  const generateHealthReport = async () => {
+    setIsHealthReportLoading(true);
+    setHealthReport('');
+
+    const logsSummary = petHealthLogs.slice(0, 5).map(l => 
+      `日期：${l.date}，飲水：${l.water}ml (目標：${currentPet.targetWater}ml)，體重：${l.weight}kg，便便狀況：${l.stool}，備註：${l.note || '無'}`
+    ).join('\n');
+
+    const systemPrompt = `你是一位擁有十幾年經驗的高級獸醫師與寵物行為學專家。
+任務是解讀最近五天的日常監測數據，輸出「健康趨勢分析與潛在預警報告」。
+請使用繁體中文，格式清晰，包含：
+1. 體重波動分析（是否在安全範圍內，每週大於2-3%波動要提醒）。
+2. 飲水達成率評估（脫水或過度飲水警告）。
+3. 便便狀態解讀。
+4. ✨ 獸醫的黃金護理指引。`;
+
+    const prompt = `寵物名稱：${currentPet.name} (${currentPet.breed})
+年齡：${currentPet.age}
+目前設定目標：卡路里 ${currentPet.targetCalories} kcal，飲水 ${currentPet.targetWater} ml
+最近 5 天健康日誌如下：
+${logsSummary}`;
+
+    try {
+      const report = await callGeminiAPI(prompt, systemPrompt);
+      setHealthReport(report);
+    } catch (err) {
+      setHealthReport(`⚠️ 無法生成診斷報告：${err.message}`);
+    } finally {
+      setIsHealthReportLoading(false);
+    }
+  };
+
+  // ✨ Gemini 核心整合：動態生成寵物獨一無二的性格特徵與飼育要點
+  const generatePersonality = async () => {
+    setIsPersonalityLoading(true);
+    
+    const systemPrompt = `你是一位寵物心理學家與品種特徵分析大師。
+請根據用戶輸入的寵物基本資料（姓名、種類、品種、年齡、體重與結紮狀態），生成一段大約 80 字內、溫慢可愛且富有洞察力的「性格與日常飼養叮嚀」。
+請用繁體中文回答，語氣要親切。`;
+
+    const prompt = `姓名：${currentPet.name}
+種類：${currentPet.type === 'cat' ? '貓咪' : '狗狗'}
+品種：${currentPet.breed}
+年齡：${currentPet.age}
+體重：${currentPet.weight} kg
+結紮狀態：${currentPet.status === 'neutered' ? '已結紮' : '未結紮'}`;
+
+    try {
+      const description = await callGeminiAPI(prompt, systemPrompt);
+      setPets(pets.map(p => {
+        if (p.id === activePetId) {
+          return { ...p, personality: description };
+        }
+        return p;
+      }));
+      triggerToast('✨ 成功動態生成毛孩的個性與健康特徵！');
+    } catch (err) {
+      triggerToast(`⚠️ 生成性格失敗：${err.message}`);
+    } finally {
+      setIsPersonalityLoading(false);
+    }
+  };
+
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
+      
+      {/* 隱藏的音訊播放組件 */}
+      <audio 
+        ref={audioPlayerRef} 
+        onEnded={() => setIsPlayingAudio(false)} 
+        className="hidden"
+      />
+
+      {/* Toast 訊息通知 */}
+      {toastMessage && (
+        <div className="fixed top-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2 transition-all duration-300 animate-bounce">
+          <Sparkles className="w-5 h-5 text-amber-400" />
+          <span className="font-medium text-sm">{toastMessage}</span>
+        </div>
+      )}
+
+      {/* 頂部導航與寵物切換 */}
+      <header className="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            
+            {/* Logo */}
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-amber-500/20">
+                <Heart className="w-6 h-6 fill-current" />
+              </div>
+              <div>
+                <span className="font-bold text-lg text-slate-900 tracking-wide block">PetDiet</span>
+                <span className="text-xs text-slate-500 font-medium -mt-1 block">毛孩飲食統計與協作中心</span>
+              </div>
+            </div>
+
+            {/* 寵物快速切換 */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center bg-slate-100 rounded-xl p-1 gap-1">
+                {pets.map((pet) => (
+                  <button
+                    key={pet.id}
+                    onClick={() => {
+                      setActivePetId(pet.id);
+                      setNextMealAdvice('');
+                      setHealthReport('');
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 ${
+                      activePetId === pet.id
+                        ? 'bg-amber-500 text-white shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>{pet.avatar}</span>
+                    <span>{pet.name}</span>
+                  </button>
+                ))}
+                <button 
+                  onClick={() => setShowAddPetModal(true)}
+                  className="p-1.5 text-slate-400 hover:text-amber-500 rounded-lg hover:bg-slate-200 transition-colors"
+                  title="新增寵物成員"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </header>
+
+      {/* 主要內容佈局 */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full flex flex-col lg:flex-row gap-8">
+        
+        {/* 左側導航面板與寵物名片 */}
+        <aside className="w-full lg:w-64 flex flex-col gap-6 shrink-0">
+          
+          {/* 當前選定寵物主卡片 */}
+          <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-3xl p-6 text-white shadow-xl shadow-amber-500/15 relative overflow-hidden">
+            <div className="absolute right-[-20px] bottom-[-20px] text-8xl opacity-15 pointer-events-none">
+              {currentPet.avatar}
+            </div>
+            <span className="bg-white/20 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-full inline-block backdrop-blur-sm mb-3">
+              {currentPet.breed}
+            </span>
+            <h2 className="text-2xl font-black mb-1">{currentPet.name}</h2>
+            
+            <div className="space-y-1.5 text-xs text-amber-50 text-opacity-90 mt-3 font-medium">
+              <p className="flex justify-between border-b border-white/10 pb-1"><span>年齡：</span><strong>{currentPet.age}</strong></p>
+              <p className="flex justify-between border-b border-white/10 pb-1"><span>體重：</span><strong>{currentPet.weight} kg</strong></p>
+              <p className="flex justify-between border-b border-white/10 pb-1"><span>目標卡路里：</span><strong>{currentPet.targetCalories} kcal</strong></p>
+              <p className="flex justify-between pb-1"><span>建議飲水量：</span><strong>{currentPet.targetWater} ml</strong></p>
+            </div>
+
+            {/* AI 個性展現區域 */}
+            <div className="mt-4 pt-3 border-t border-white/20 bg-black/10 rounded-xl p-2.5">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-[10px] font-bold text-amber-200">✨ AI 寵物個性特徵</span>
+                <button 
+                  onClick={generatePersonality}
+                  disabled={isPersonalityLoading}
+                  className="text-[9px] bg-white/20 hover:bg-white/30 text-white font-bold py-0.5 px-1.5 rounded transition-all disabled:opacity-50"
+                >
+                  {isPersonalityLoading ? '分析中...' : '✨ 重刷'}
+                </button>
+              </div>
+              <p className="text-[11px] leading-relaxed text-amber-50 italic">
+                {currentPet.personality || "點擊上方重刷按鈕，讓 Gemini 讀取品種與資料，生成專屬性格特徵！"}
+              </p>
+            </div>
+          </div>
+
+          {/* 功能頁籤切換 */}
+          <nav className="bg-white rounded-2xl p-2.5 border border-slate-100 shadow-sm flex flex-row lg:flex-col gap-1 overflow-x-auto">
+            <button
+              onClick={() => setActiveTab('dashboard')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all w-full shrink-0 lg:shrink ${
+                activeTab === 'dashboard'
+                  ? 'bg-amber-50 text-amber-600'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <Activity className="w-4.5 h-4.5" />
+              <span>健康儀表板</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('logger')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all w-full shrink-0 lg:shrink ${
+                activeTab === 'logger'
+                  ? 'bg-amber-50 text-amber-600'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <Calendar className="w-4.5 h-4.5" />
+              <span>飲食與生理日誌</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('charts')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all w-full shrink-0 lg:shrink ${
+                activeTab === 'charts'
+                  ? 'bg-amber-50 text-amber-600'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <TrendingUp className="w-4.5 h-4.5" />
+              <span>健康趨勢統計</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('ai_assistant')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all w-full shrink-0 lg:shrink ${
+                activeTab === 'ai_assistant'
+                  ? 'bg-amber-50 text-amber-600'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <Sparkles className="w-4.5 h-4.5 text-amber-500 animate-pulse" />
+              <span>AI 寵物營養中心</span>
+            </button>
+
+            <div className="h-px bg-slate-100 my-2 hidden lg:block" />
+
+            <button
+              onClick={() => setActiveTab('collaboration_hub')}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all w-full shrink-0 lg:shrink border ${
+                activeTab === 'collaboration_hub'
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
+                  : 'text-slate-700 border-dashed border-slate-200 hover:bg-indigo-50/50 hover:border-indigo-200 hover:text-indigo-600'
+              }`}
+            >
+              <BookOpen className="w-4.5 h-4.5" />
+              <span>💡 協作開發指南</span>
+            </button>
+          </nav>
+
+        </aside>
+
+        {/* 右側核心操作區 */}
+        <main className="flex-1 bg-white rounded-3xl border border-slate-100 shadow-sm p-6 sm:p-8 min-h-[600px] flex flex-col">
+          
+          {/* TAB 1: 儀表板 */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-6 flex-1">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
+                <div>
+                  <h1 className="text-2xl font-black text-slate-900">今日飲食與健康摘要</h1>
+                  <p className="text-sm text-slate-500 mt-1">
+                    當前日期：<span className="font-semibold text-slate-700">{todayStr}</span> （模擬今日數據）
+                  </p>
+                </div>
+                
+                {/* 日誌快捷鍵 */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowAddMealModal(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 shadow-md shadow-amber-500/15 hover:shadow-lg transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>記一餐</span>
+                  </button>
+                  <button
+                    onClick={() => setShowAddHealthModal(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all"
+                  >
+                    <Activity className="w-4 h-4 text-slate-500" />
+                    <span>記生理數據</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 三大進度環與狀態卡片 */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                {/* 1. 卡路里熱量卡片 */}
+                <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-5 flex flex-col justify-between">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2.5 bg-amber-100 text-amber-600 rounded-xl">
+                      <Heart className="w-5 h-5 fill-current" />
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-200/60 rounded text-slate-500 uppercase">CALORIES</span>
+                  </div>
+                  <div className="mt-4">
+                    <span className="text-3xl font-black text-slate-800">{todayCalories}</span>
+                    <span className="text-sm text-slate-400 font-medium"> / {currentPet.targetCalories} kcal</span>
+                  </div>
+                  <div className="mt-3">
+                    <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-amber-500 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${Math.min((todayCalories / currentPet.targetCalories) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2 font-medium">
+                      今日熱量攝取進度：{((todayCalories / currentPet.targetCalories) * 100).toFixed(0)}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* 2. 飲水量卡片 */}
+                <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-5 flex flex-col justify-between">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2.5 bg-sky-100 text-sky-600 rounded-xl">
+                      <Droplet className="w-5 h-5 fill-current" />
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-200/60 rounded text-slate-500 uppercase">WATER</span>
+                  </div>
+                  <div className="mt-4">
+                    <span className="text-3xl font-black text-slate-800">{todayWater}</span>
+                    <span className="text-sm text-slate-400 font-medium"> / {currentPet.targetWater} ml</span>
+                  </div>
+                  <div className="mt-3">
+                    <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-sky-500 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${Math.min((todayWater / currentPet.targetWater) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2 font-medium">
+                      今日飲水量進度：{((todayWater / currentPet.targetWater) * 100).toFixed(0)}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* 3. 體重與排便 */}
+                <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-5 flex flex-col justify-between">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2.5 bg-teal-100 text-teal-600 rounded-xl">
+                      <Scale className="w-5 h-5" />
+                    </div>
+                    <span className="text-[10px] font-bold px-2 py-0.5 bg-slate-200/60 rounded text-slate-500 uppercase">HEALTH</span>
+                  </div>
+                  <div className="mt-4">
+                    <div className="flex justify-between items-baseline">
+                      <div>
+                        <span className="text-2xl font-black text-slate-800">{todayHealthLog.weight || currentPet.weight}</span>
+                        <span className="text-xs text-slate-400 font-medium"> kg</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-slate-400 block">排便硬度</span>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded ${
+                          todayHealthLog.stool === '正常' ? 'bg-teal-100 text-teal-700' : 
+                          todayHealthLog.stool === '偏軟' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                        }`}>{todayHealthLog.stool || '無紀錄'}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 border-t border-slate-200/60 pt-2 text-xs text-slate-500">
+                    <p className="line-clamp-2"><strong>備忘：</strong>{todayHealthLog.note || '今日尚無特別備註。'}</p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* ✨ AI 寵物健康教練建議 (Gemini TTS 整合多模態音訊播放) */}
+              <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 sm:p-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-amber-200/60">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 bg-amber-100 text-amber-700 rounded-xl">
+                      <Sparkles className="w-5 h-5 animate-pulse" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-sm sm:text-base">✨ AI 健康教練建議與語音日報</h3>
+                      <p className="text-[11px] text-slate-500">結合 Gemini 3.1 營養分析與 2.5 TTS 真人語音導讀</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={generateVoiceBriefing}
+                      disabled={isCoachLoading}
+                      className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                    >
+                      {isCoachLoading ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>AI 分析與配音中...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-3.5 h-3.5 fill-current text-white" />
+                          <span>一鍵生成與播放叮嚀</span>
+                        </>
+                      )}
+                    </button>
+
+                    {audioUrl && (
+                      <button
+                        onClick={togglePlayAudio}
+                        className={`p-2 rounded-xl border text-xs font-bold transition-all ${
+                          isPlayingAudio 
+                            ? 'bg-rose-50 border-rose-200 text-rose-600' 
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                        title={isPlayingAudio ? "暫停播放" : "重新播放"}
+                      >
+                        {isPlayingAudio ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-4 items-start">
+                  <div className="hidden sm:flex flex-col items-center gap-1.5 shrink-0">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-md ${isPlayingAudio ? 'bg-amber-500 text-white animate-bounce' : 'bg-slate-100'}`}>
+                      {isPlayingAudio ? '🎙️' : '👨‍⚕️'}
+                    </div>
+                    {isPlayingAudio && (
+                      <div className="flex gap-0.5 h-3 items-end">
+                        <div className="w-1 bg-amber-500 h-full rounded animate-pulse" />
+                        <div className="w-1 bg-amber-500 h-2/3 rounded animate-pulse delay-75" />
+                        <div className="w-1 bg-amber-500 h-1/2 rounded animate-pulse delay-150" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 bg-white border border-amber-100 rounded-2xl p-4 text-xs sm:text-sm text-slate-700 leading-relaxed shadow-inner">
+                    <p className="font-semibold text-amber-800 mb-1.5">📢 教練的話：</p>
+                    <p className="italic">{coachAdvice}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* ✨ AI 今日下一餐客製化推薦 */}
+              <div className="bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-transparent border border-amber-200 rounded-2xl p-5 shadow-sm">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <BrainCircuit className="w-5 h-5 text-amber-600 animate-pulse" />
+                    <h3 className="font-bold text-slate-900 text-sm sm:text-base">✨ AI 客製化調配今日下一餐</h3>
+                  </div>
+                  <button
+                    onClick={generateNextMealAdvice}
+                    disabled={isNextMealLoading}
+                    className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shadow-sm disabled:opacity-50"
+                  >
+                    {isNextMealLoading ? 'AI 正在精密計算...' : '✨ 一鍵推薦配方'}
+                  </button>
+                </div>
+                
+                {nextMealAdvice ? (
+                  <div className="mt-4 bg-white border border-amber-100 rounded-xl p-4 text-xs sm:text-sm text-slate-700 leading-relaxed max-h-60 overflow-y-auto whitespace-pre-line shadow-inner">
+                    {nextMealAdvice}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 mt-2">
+                    點擊按鈕，Gemini 會根據 {currentPet.name} 今日剩餘的卡路里、飲水進度，在雲端即時運算調配出最科學、美味的晚餐配方與克數。
+                  </p>
+                )}
+              </div>
+
+              {/* 今日飲食清單 */}
+              <div className="mt-8">
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <span>🍽️ 今日已進食項目 ({todayMeals.length})</span>
+                </h3>
+                
+                {todayMeals.length === 0 ? (
+                  <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center text-slate-400">
+                    <p className="text-sm">今日尚無進食紀錄</p>
+                    <button 
+                      onClick={() => setShowAddMealModal(true)}
+                      className="text-xs text-amber-500 underline font-bold mt-2 hover:text-amber-600 block mx-auto"
+                    >
+                      立即手動新增
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 rounded-2xl overflow-hidden border border-slate-100">
+                    <table className="w-full text-left text-sm border-collapse">
+                      <thead>
+                        <tr className="bg-slate-100 text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200">
+                          <th className="px-6 py-3">時間</th>
+                          <th className="px-6 py-3">種類</th>
+                          <th className="px-6 py-3">食物名稱</th>
+                          <th className="px-6 py-3 text-right">克數</th>
+                          <th className="px-6 py-3 text-right">熱量</th>
+                          <th className="px-6 py-3">備註</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 font-medium">
+                        {todayMeals.map((meal) => (
+                          <tr key={meal.id} className="hover:bg-slate-100/50 text-slate-700 transition-colors">
+                            <td className="px-6 py-4 text-slate-500 font-bold">{meal.time}</td>
+                            <td className="px-6 py-4">
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                                meal.type === '飼料' ? 'bg-amber-100 text-amber-700' :
+                                meal.type === '罐頭' ? 'bg-sky-100 text-sky-700' : 'bg-emerald-100 text-emerald-700'
+                              }`}>{meal.type}</span>
+                            </td>
+                            <td className="px-6 py-4 font-bold text-slate-800">{meal.name}</td>
+                            <td className="px-6 py-4 text-right">{meal.amount}g</td>
+                            <td className="px-6 py-4 text-right text-amber-600 font-bold">{meal.calories} kcal</td>
+                            <td className="px-6 py-4 text-xs text-slate-500">{meal.note || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: 飲食與生理日誌 */}
+          {activeTab === 'logger' && (
+            <div className="space-y-6 flex-1">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 pb-5">
+                <div>
+                  <h1 className="text-2xl font-black text-slate-900">歷史日誌管理</h1>
+                  <p className="text-sm text-slate-500 mt-1">追蹤與管理 {currentPet.name} 的完整健康數據</p>
+                </div>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowAddMealModal(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 shadow-md transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>新增飲食</span>
+                  </button>
+                  <button
+                    onClick={() => setShowAddHealthModal(true)}
+                    className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>生理日誌</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* 兩張主要日誌表切換 */}
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                
+                {/* 左側：飲食歷史紀錄 */}
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                    <span>飲食歷史</span>
+                  </h3>
+                  
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                    {petMeals.map((meal) => (
+                      <div key={meal.id} className="bg-slate-50 rounded-xl p-4 border border-slate-100 hover:border-slate-200 transition-all flex justify-between items-start">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-slate-400 font-bold">{meal.date} {meal.time}</span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.2 bg-slate-200 text-slate-600 rounded">{meal.type}</span>
+                          </div>
+                          <h4 className="font-bold text-sm text-slate-800">{meal.name}</h4>
+                          <p className="text-xs text-slate-500">{meal.amount}g • {meal.note || '無備註'}</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-sm font-black text-amber-600">{meal.calories} kcal</span>
+                          <button 
+                            onClick={() => {
+                              setMeals(meals.filter(m => m.id !== meal.id));
+                              triggerToast('🗑️ 已刪除該筆飲食！');
+                            }}
+                            className="block text-slate-300 hover:text-red-500 mt-2 ml-auto transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 右側：生理健康歷史紀錄 */}
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+                    <span>生理指標與排便日誌</span>
+                  </h3>
+
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+                    {petHealthLogs.map((log) => (
+                      <div key={log.id} className="bg-slate-50 rounded-xl p-4 border border-slate-100 hover:border-slate-200 transition-all">
+                        <div className="flex justify-between items-center mb-2.5">
+                          <span className="text-xs text-slate-400 font-bold">{log.date}</span>
+                          <div className="flex gap-1.5">
+                            <span className="text-[10px] font-bold px-2 py-0.5 bg-sky-50 text-sky-600 rounded-full flex items-center gap-0.5">
+                              <Droplet className="w-3 h-3 fill-current" /> {log.water}ml
+                            </span>
+                            <span className="text-[10px] font-bold px-2 py-0.5 bg-teal-50 text-teal-600 rounded-full flex items-center gap-0.5">
+                              <Scale className="w-3 h-3" /> {log.weight}kg
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-xs font-semibold text-slate-500">排便狀況：</span>
+                            <span className={`text-xs font-extrabold px-1.5 py-0.2 rounded ${
+                              log.stool === '正常' ? 'bg-teal-100 text-teal-800' : 'bg-amber-100 text-amber-800'
+                            }`}>{log.stool}</span>
+                            <p className="text-xs text-slate-600 mt-1.5">{log.note || '無其他異常記錄'}</p>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              setHealthLogs(healthLogs.filter(h => h.id !== log.id));
+                              triggerToast('🗑️ 已刪除該筆健康指標！');
+                            }}
+                            className="text-slate-300 hover:text-red-500 transition-colors self-end"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: 健康趨勢統計 */}
+          {activeTab === 'charts' && (
+            <div className="space-y-8 flex-1">
+              <div className="border-b border-slate-100 pb-5">
+                <h1 className="text-2xl font-black text-slate-900">健康趨勢與圖表統計</h1>
+                <p className="text-sm text-slate-500 mt-1">透過數據可視化，精準洞察毛孩的生理趨勢與熱量變化</p>
+              </div>
+
+              {/* ✨ AI 一鍵生成五日健康報告 */}
+              <div className="bg-indigo-900 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                <div className="absolute right-[-10px] top-[-10px] text-7xl opacity-10 pointer-events-none">
+                  🩺
+                </div>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div>
+                    <h3 className="font-bold text-lg text-amber-400 flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 fill-current text-amber-400" />
+                      <span>✨ AI 獸醫臨床數據綜合診斷報告</span>
+                    </h3>
+                    <p className="text-xs text-slate-200 mt-1">
+                      Gemini 會深入交叉分析近 5 天的體重、便便狀態和水量缺口。
+                    </p>
+                  </div>
+                  <button
+                    onClick={generateHealthReport}
+                    disabled={isHealthReportLoading}
+                    className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-900 rounded-xl text-xs font-black transition-all shadow-md disabled:opacity-50"
+                  >
+                    {isHealthReportLoading ? 'AI 報告分析撰寫中...' : '✨ 一鍵生成診斷'}
+                  </button>
+                </div>
+
+                {healthReport && (
+                  <div className="mt-5 bg-white/10 backdrop-blur-md rounded-2xl p-4 text-xs sm:text-sm text-slate-100 leading-relaxed max-h-72 overflow-y-auto whitespace-pre-line border border-white/10">
+                    {healthReport}
+                  </div>
+                )}
+              </div>
+
+              {/* 卡路里與建議目標趨勢圖 */}
+              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+                <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-amber-500" />
+                  <span>每日熱量攝取 vs 建議目標趨勢圖 (近 5 日)</span>
+                </h3>
+                <div className="h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={[...petHealthLogs].reverse().map(log => {
+                        const dayMeals = meals.filter(m => m.petId === activePetId && m.date === log.date);
+                        const dayCalories = dayMeals.reduce((sum, m) => sum + m.calories, 0);
+                        return {
+                          date: log.date.substring(5),
+                          '實際攝取': dayCalories,
+                          '建議目標': currentPet.targetCalories
+                        };
+                      })}
+                      margin={{ top: 20, right: 30, left: 0, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="實際攝取" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="建議目標" fill="#cbd5e1" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* 體重與水分攝取圖 */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                {/* 1. 體重曲線變化 */}
+                <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+                  <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <Scale className="w-4 h-4 text-teal-500" />
+                    <span>體重波動變化 (kg)</span>
+                  </h3>
+                  <div className="h-60 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={[...petHealthLogs].reverse().map(log => ({
+                          date: log.date.substring(5),
+                          '體重': log.weight
+                        }))}
+                        margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="date" />
+                        <YAxis domain={['dataMin - 0.2', 'dataMax + 0.2']} />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="體重" stroke="#14b8a6" strokeWidth={3} dot={{ r: 5 }} activeDot={{ r: 8 }} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                {/* 2. 水分達標折線 */}
+                <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100">
+                  <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <Droplet className="w-4 h-4 text-sky-500" />
+                    <span>飲水量統計 (ml)</span>
+                  </h3>
+                  <div className="h-60 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={[...petHealthLogs].reverse().map(log => ({
+                          date: log.date.substring(5),
+                          '飲水量': log.water,
+                          '建議目標': currentPet.targetWater
+                        }))}
+                        margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="飲水量" stroke="#0284c7" strokeWidth={3} dot={{ r: 5 }} />
+                        <Line type="dashed" dataKey="建議目標" stroke="#94a3b8" strokeDasharray="5 5" dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: AI 寵物營養中心 (新增子分頁：安全掃描與食譜訂製) */}
+          {activeTab === 'ai_assistant' && (
+            <div className="space-y-6 flex-1 flex flex-col">
+              <div className="border-b border-slate-100 pb-5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-6 h-6 text-amber-500 animate-pulse" />
+                  <h1 className="text-2xl font-black text-slate-900">AI 寵物智慧營養中心</h1>
+                </div>
+                <p className="text-sm text-slate-500 mt-1">
+                  目前連線：<span className="font-bold text-amber-600">Gemini 3.1 & 2.5 TTS 雙模型 </span> | 基於 <span className="font-semibold text-slate-700">{currentPet.name}</span> 的個人檔案
+                </p>
+              </div>
+
+              {/* 子分頁切換鈕 */}
+              <div className="flex border-b border-slate-100">
+                <button
+                  onClick={() => setAiSubTab('chat')}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-xs sm:text-sm font-bold transition-all ${
+                    aiSubTab === 'chat'
+                      ? 'border-amber-500 text-amber-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>💬 營養師諮詢對話</span>
+                </button>
+
+                <button
+                  onClick={() => setAiSubTab('food_safety')}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-xs sm:text-sm font-bold transition-all ${
+                    aiSubTab === 'food_safety'
+                      ? 'border-amber-500 text-amber-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <ShieldAlert className="w-4 h-4" />
+                  <span>🍎 食材安全毒性掃描</span>
+                </button>
+
+                <button
+                  onClick={() => setAiSubTab('recipe_maker')}
+                  className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-xs sm:text-sm font-bold transition-all ${
+                    aiSubTab === 'recipe_maker'
+                      ? 'border-amber-500 text-amber-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  <ChefHat className="w-4 h-4" />
+                  <span>🍳 科學鮮食食譜訂製</span>
+                </button>
+              </div>
+
+              {/* 子頁 1：Chat */}
+              {aiSubTab === 'chat' && (
+                <div className="flex-1 flex flex-col gap-4">
+                  {/* 聊天對話視窗 */}
+                  <div className="flex-1 border border-slate-100 bg-slate-50/50 rounded-2xl p-4 overflow-y-auto max-h-[350px] flex flex-col gap-4">
+                    {chatHistory.map((chat, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`flex gap-3 max-w-[85%] ${chat.role === 'user' ? 'ml-auto flex-row-reverse' : 'mr-auto'}`}
+                      >
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm shadow-sm shrink-0 ${
+                          chat.role === 'user' ? 'bg-amber-100 text-amber-700 font-bold' : 'bg-slate-900 text-white'
+                        }`}>
+                          {chat.role === 'user' ? '👤' : '🤖'}
+                        </div>
+                        <div className={`p-3.5 rounded-2xl text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
+                          chat.role === 'user' 
+                            ? 'bg-amber-500 text-white rounded-tr-none' 
+                            : 'bg-white border border-slate-100 text-slate-700 shadow-sm rounded-tl-none'
+                        }`}>
+                          {chat.text}
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {isAiLoading && (
+                      <div className="flex gap-3 max-w-[85%] mr-auto items-center">
+                        <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-xs animate-spin shrink-0">
+                          🌀
+                        </div>
+                        <div className="p-3 bg-white border border-slate-100 text-slate-500 rounded-2xl shadow-sm text-xs font-medium italic">
+                          AI 營養諮詢師正在計算最佳營養配比中...
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 發送問題欄 */}
+                  <form onSubmit={handleAskAi} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                      placeholder={`詢問關於 ${currentPet.name} 的飲食健康配方或體重管理...`}
+                      className="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                      disabled={isAiLoading}
+                    />
+                    <button
+                      type="submit"
+                      disabled={isAiLoading}
+                      className="px-5 bg-slate-900 text-white rounded-xl text-sm font-bold hover:bg-slate-800 disabled:opacity-50 transition-all flex items-center gap-1 shrink-0"
+                    >
+                      <span>諮詢</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </form>
+
+                  {/* 快速推薦問題 */}
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    <button 
+                      onClick={() => setAiPrompt(`針對 ${currentPet.weight} 公斤的 ${currentPet.breed}，每日最健康的鮮食與乾飼料黃金比例怎麼調配？`)}
+                      className="bg-white hover:bg-slate-50 text-[11px] font-semibold text-slate-600 px-3 py-1.5 rounded-full border border-slate-200 transition-colors"
+                    >
+                      💡 鮮食與飼料黃金比例
+                    </button>
+                    <button 
+                      onClick={() => setAiPrompt(`${currentPet.name} 應該要減重嗎？如果需要，每日熱量目標該如何下修？`)}
+                      className="bg-white hover:bg-slate-50 text-[11px] font-semibold text-slate-600 px-3 py-1.5 rounded-full border border-slate-200 transition-colors"
+                    >
+                      ⚖️ 減重與熱量計算
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 子頁 2：食材安全掃描器 */}
+              {aiSubTab === 'food_safety' && (
+                <div className="space-y-4 flex-1">
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                    <h3 className="font-bold text-sm text-slate-800 mb-2">🍎 寵物食材安全毒性快速檢索</h3>
+                    <p className="text-xs text-slate-500 mb-4">輸入任何人類食材，由 AI 即時秒查對貓狗是否有中毒危險，守護毛孩脆弱的器官與胃腸。</p>
+                    
+                    <form onSubmit={handleFoodScan} className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Search className="w-4.5 h-4.5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          value={foodQuery}
+                          onChange={(e) => setFoodQuery(e.target.value)}
+                          placeholder="請輸入食材，例如：洋蔥、酪梨、南瓜、巧克力..."
+                          className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        disabled={isFoodScanning}
+                        className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-xl transition-all"
+                      >
+                        {isFoodScanning ? '掃描中...' : '進行 AI 掃描'}
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* 掃描結果顯示 */}
+                  {foodScanResult && (
+                    <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
+                      <div className="flex justify-between items-center">
+                        <h4 className="text-lg font-black text-slate-800">🔍 「{foodScanResult.food}」掃描診斷報告</h4>
+                        <span className={`px-3 py-1 rounded-full text-xs font-black ${
+                          foodScanResult.safetyLevel === 'Safe' ? 'bg-emerald-100 text-emerald-800' :
+                          foodScanResult.safetyLevel === 'Caution' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800'
+                        }`}>
+                          {foodScanResult.safetyLevel === 'Safe' ? '🟢 安全推薦' :
+                           foodScanResult.safetyLevel === 'Caution' ? '🟡 酌量謹慎' : '🔴 中毒危害'}
+                        </span>
+                      </div>
+
+                      <p className="text-sm font-bold text-slate-700 bg-slate-50 p-3 rounded-xl border-l-4 border-amber-500">
+                        📋 總結：{foodScanResult.summary}
+                      </p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                        <div className="bg-orange-50/40 p-4 rounded-xl border border-orange-100">
+                          <p className="text-xs font-black text-orange-800 mb-1.5">🐕 狗狗餵食與臨床診斷：</p>
+                          <p className="text-xs text-slate-600 leading-relaxed">{foodScanResult.dogSafety}</p>
+                        </div>
+                        <div className="bg-indigo-50/30 p-4 rounded-xl border border-indigo-100">
+                          <p className="text-xs font-black text-indigo-800 mb-1.5">🐈 貓咪餵食與臨床診斷：</p>
+                          <p className="text-xs text-slate-600 leading-relaxed">{foodScanResult.catSafety}</p>
+                        </div>
+                      </div>
+
+                      {foodScanResult.nutrients && (
+                        <div className="text-xs text-slate-500 pt-1">
+                          <strong>🧬 營養或有害物質分析：</strong> {foodScanResult.nutrients}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 子頁 3：自製科學鮮食調配器 */}
+              {aiSubTab === 'recipe_maker' && (
+                <div className="space-y-4 flex-1">
+                  <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-4">
+                    <h3 className="font-bold text-sm text-slate-800">🍳 專屬客製化 AI 鮮食與零食食譜調配器</h3>
+                    <p className="text-xs text-slate-500">
+                      根據當前選定的毛孩 <strong>{currentPet.name} ({currentPet.weight}kg)</strong> 體重指標與今日的健康目標，設計專屬自製美味食譜。
+                    </p>
+
+                    <div className="space-y-3">
+                      {/* 調配目標 */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5">1. 選擇今日調配目標</label>
+                        <div className="flex flex-wrap gap-2">
+                          {['泌尿保健', '增肌減脂', '護膚亮毛', '關節與骨骼養護', '低卡瘦身點心'].map((goal) => (
+                            <button
+                              key={goal}
+                              type="button"
+                              onClick={() => setRecipeGoal(goal)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                                recipeGoal === goal 
+                                  ? 'bg-amber-500 text-white shadow-sm' 
+                                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                              }`}
+                            >
+                              {goal}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 食材選擇 */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5">2. 勾選家裡現有的優質食材</label>
+                        <div className="flex flex-wrap gap-2">
+                          {['雞胸肉', '鮭魚肉', '南瓜', '綠花椰菜', '雞蛋', '胡蘿蔔', '燕麥', '牛肉', '馬鈴薯'].map((ing) => {
+                            const isSelected = selectedIngredients.includes(ing);
+                            return (
+                              <button
+                                key={ing}
+                                type="button"
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedIngredients(selectedIngredients.filter(i => i !== ing));
+                                  } else {
+                                    setSelectedIngredients([...selectedIngredients, ing]);
+                                  }
+                                }}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 ${
+                                  isSelected 
+                                    ? 'bg-amber-100 text-amber-700 border-amber-300 border' 
+                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                }`}
+                              >
+                                <span>{isSelected ? '✓' : '+'}</span>
+                                <span>{ing}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* 自訂其他食材 */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-500 mb-1">3. 其他自定義食材（非必填）</label>
+                        <input
+                          type="text"
+                          value={customIngredients}
+                          onChange={(e) => setCustomIngredients(e.target.value)}
+                          placeholder="例如：地瓜、亞麻籽粉、鮭魚油"
+                          className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleGenerateRecipe}
+                      disabled={isRecipeGenerating || selectedIngredients.length === 0}
+                      className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50"
+                    >
+                      {isRecipeGenerating ? 'AI 精密膳食計算中...' : '✨ 一鍵生成獸醫標準科學食譜'}
+                    </button>
+                  </div>
+
+                  {generatedRecipe && (
+                    <div className="bg-white border border-amber-200 rounded-2xl p-5 shadow-sm space-y-3">
+                      <div className="flex items-center gap-1.5 border-b border-amber-100 pb-2">
+                        <ChefHat className="w-5 h-5 text-amber-500 animate-pulse" />
+                        <h4 className="font-bold text-slate-800 text-sm sm:text-base">👩‍🍳 為 {currentPet.name} 設計的「{recipeGoal}」鮮食點心配方</h4>
+                      </div>
+                      <div className="text-xs sm:text-sm text-slate-700 leading-relaxed max-h-96 overflow-y-auto whitespace-pre-line bg-amber-50/20 p-4 rounded-xl border border-amber-100/50 shadow-inner">
+                        {generatedRecipe}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </div>
+          )}
+
+          {/* TAB 5: 協作開發指南 */}
+          {activeTab === 'collaboration_hub' && (
+            <div className="space-y-6 flex-1">
+              <div className="border-b border-slate-100 pb-5">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-indigo-100 text-indigo-700 rounded-xl">
+                    <BookOpen className="w-6 h-6" />
+                  </div>
+                  <h1 className="text-2xl font-black text-slate-900">💡 協作開發溝通框架</h1>
+                </div>
+                <p className="text-sm text-slate-500 mt-1">
+                  如何與我 (Gemini AI) 進行最高效的溝通與迭代？這份指南將告訴你如何發號施令！
+                </p>
+              </div>
+
+              {/* 協作 4 步法 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-3">
+                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider block w-fit">PHASE 1</span>
+                  <h3 className="font-bold text-base text-slate-800">調整功能與介面細節</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    如果你想更改網站顏色、字體，或是增加新的輸入欄位（例如：新增過敏原標籤、飼料品牌追蹤等）。
+                  </p>
+                  <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                    <span className="text-[10px] font-bold text-indigo-700 block mb-1">💬 你可以這樣對我說：</span>
+                    <p className="text-xs text-indigo-900 italic font-medium">「請幫我在飲食日誌中加入『過敏反應』下拉選單（包含：無、皮膚紅腫、拉肚子）。」</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-3">
+                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider block w-fit">PHASE 2</span>
+                  <h3 className="font-bold text-base text-slate-800">數據庫儲存與雲端備份</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    目前的數據儲存在瀏覽器記憶體中。當你準備好保存真實歷史數據時，我們可以一鍵升級雲端雲端儲存，無需安裝任何複雜庫。
+                  </p>
+                  <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                    <span className="text-[10px] font-bold text-indigo-700 block mb-1">💬 你可以這樣對我說：</span>
+                    <p className="text-xs text-indigo-900 italic font-medium">「我希望儲存我的寵物數據。請幫我開啟雲端同步功能，讓不同設備也能保存紀錄。」</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-3">
+                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider block w-fit">PHASE 3</span>
+                  <h3 className="font-bold text-base text-slate-800">計算公式與營養推薦升級</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    導入不同寵物（貓、犬）與體態指標（幼齡、已絕育、過重、懷孕）的專業計算公式，讓系統自動建議每天所需熱量。
+                  </p>
+                  <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                    <span className="text-[10px] font-bold text-indigo-700 block mb-1">💬 你可以這樣對我說：</span>
+                    <p className="text-xs text-indigo-900 italic font-medium">「請寫一套專業的 RER 與 MER 貓狗熱量與飲水建議算法，取代預設手動輸入的數值。」</p>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-3">
+                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full uppercase tracking-wider block w-fit">PHASE 4</span>
+                  <h3 className="font-bold text-base text-slate-800">拍照識別飼料標籤與分析</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    你可以藉由拍照上傳寵物食品的營養成分表，讓內建的 Gemini 視覺模型自動識別出其中的粗蛋白、粗脂肪並存入。
+                  </p>
+                  <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                    <span className="text-[10px] font-bold text-indigo-700 block mb-1">💬 你可以這樣對我說：</span>
+                    <p className="text-xs text-indigo-900 italic font-medium">「我希望加入一個『拍飼料包裝袋上傳』功能，由 AI 自動分析該款飼料是否符合當前寵物健康指標。」</p>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* 溝通規格清單 */}
+              <div className="bg-indigo-950 text-white rounded-2xl p-6 mt-6">
+                <h4 className="font-bold text-amber-400 mb-3 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5" />
+                  <span>我們下一步要進行的合作對話規範</span>
+                </h4>
+                <p className="text-xs text-slate-300 leading-relaxed mb-4">
+                  當你在下方對話框回覆我時，你可以選擇以下其中一項，或者自定義。建議提供以下資料給我：
+                </p>
+                <ul className="space-y-2 text-xs text-slate-200">
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-amber-400">1.</span>
+                    <span><strong>你的寵物基本特徵：</strong> 狗還是貓？品種是什麼？年齡與體重？是否有過敏病史？</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-amber-400">2.</span>
+                    <span><strong>你最在意的數據：</strong> 例如你希望偏重在「減重管理」、「每日多喝水追蹤」還是「鮮食食譜克數計算」？</span>
+                  </li>
+                  <li className="flex items-start gap-1.5">
+                    <span className="text-amber-400">3.</span>
+                    <span><strong>新增模組期望：</strong> 是否需要加入體檢報告照片存檔、獸醫看診時間預約提醒等？</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+        </main>
+
+      </div>
+
+      {/* 頁尾 */}
+      <footer className="bg-slate-900 text-slate-400 py-8 border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs">
+          <p className="font-medium">PetDiet 寵物飲食健康追蹤與統計網站 © 2026. 開源協作 V2.5 (Powered by Gemini AI)</p>
+          <p className="mt-2 text-slate-500">
+            本工具專為寵物日常數據記錄設計。任何嚴重的臨床醫學健康或絕食問題，請務必諮詢專業合格獸醫師。
+          </p>
+        </div>
+      </footer>
+
+      {/* 彈出視窗 1: 記一餐 */}
+      {showAddMealModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95">
+            <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-1.5">
+              <span>🍽️ 新增當日進食紀錄</span>
+            </h3>
+            <form onSubmit={handleAddMeal} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">時間</label>
+                  <input
+                    type="time"
+                    value={mealForm.time}
+                    onChange={(e) => setMealForm({ ...mealForm, time: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">種類</label>
+                  <select
+                    value={mealForm.type}
+                    onChange={(e) => setMealForm({ ...mealForm, type: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                  >
+                    <option value="飼料">飼料 (乾乾)</option>
+                    <option value="罐頭">主食/副食罐</option>
+                    <option value="鮮食">自製鮮食</option>
+                    <option value="零食">肉乾/零食點心</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">食物品牌或名稱</label>
+                <input
+                  type="text"
+                  placeholder="例如：巔峰牛肉罐頭、紐頓飼料"
+                  value={mealForm.name}
+                  onChange={(e) => setMealForm({ ...mealForm, name: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">餵食量 (g)</label>
+                  <input
+                    type="number"
+                    placeholder="克數"
+                    value={mealForm.amount}
+                    onChange={(e) => setMealForm({ ...mealForm, amount: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">估計卡路里 (kcal)</label>
+                  <input
+                    type="number"
+                    placeholder="熱量"
+                    value={mealForm.calories}
+                    onChange={(e) => setMealForm({ ...mealForm, calories: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">進食情況/備註</label>
+                <textarea
+                  placeholder="吃完後有拉肚子嗎？胃口好不好？"
+                  value={mealForm.note}
+                  onChange={(e) => setMealForm({ ...mealForm, note: e.target.value })}
+                  rows="2"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddMealModal(false)}
+                  className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-200"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-amber-500 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-amber-600 shadow-md shadow-amber-500/15"
+                >
+                  保存飲食日誌
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 彈出視窗 2: 記日常生理數據 */}
+      {showAddHealthModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95">
+            <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-1.5">
+              <span>🩺 更新日常生理數據 ({todayStr})</span>
+            </h3>
+            <form onSubmit={handleAddHealth} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">今日飲水量 (ml)</label>
+                  <input
+                    type="number"
+                    placeholder="輸入毫升數"
+                    value={healthForm.water}
+                    onChange={(e) => setHealthForm({ ...healthForm, water: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">今日體重 (kg)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="輸入公斤數"
+                    value={healthForm.weight}
+                    onChange={(e) => setHealthForm({ ...healthForm, weight: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">今日便便與排泄硬度</label>
+                <select
+                  value={healthForm.stool}
+                  onChange={(e) => setHealthForm({ ...healthForm, stool: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                >
+                  <option value="正常">正常 (漂亮的條狀，撿起不沾地)</option>
+                  <option value="偏軟">偏軟 (成形，但拿起來會變形黏地)</option>
+                  <option value="偏硬">偏硬 (一小顆一小顆、羊便便狀)</option>
+                  <option value="腹瀉">腹瀉 (拉肚子，呈現水狀或糊狀)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-500 mb-1">備註/精神狀態</label>
+                <textarea
+                  placeholder="例如：今天精神很好，活動力正常，但下午有些微軟便。"
+                  value={healthForm.note}
+                  onChange={(e) => setHealthForm({ ...healthForm, note: e.target.value })}
+                  rows="3"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddHealthModal(false)}
+                  className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-200"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-sky-500 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-sky-600 shadow-md shadow-sky-500/15"
+                >
+                  確認保存健康數據
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 彈出視窗 3: 新增寵物 */}
+      {showAddPetModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100 animate-in fade-in zoom-in-95">
+            <h3 className="text-lg font-black text-slate-900 mb-4 flex items-center gap-1.5 border-b border-slate-100 pb-2">
+              <Calculator className="w-5 h-5 text-amber-500" />
+              <span>新增寵物成員（內置科學計算器）</span>
+            </h3>
+            <form onSubmit={handleAddPet} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">寵物姓名 (必填)</label>
+                  <input
+                    type="text"
+                    placeholder="如：jiu"
+                    value={petForm.name}
+                    onChange={(e) => setPetForm({ ...petForm, name: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">寵物種類</label>
+                  <select
+                    value={petForm.type}
+                    onChange={(e) => setPetForm({ ...petForm, type: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                  >
+                    <option value="dog">狗狗 🐶</option>
+                    <option value="cat">貓咪 🐱</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">品種 (必填)</label>
+                  <input
+                    type="text"
+                    placeholder="如：米克斯"
+                    value={petForm.breed}
+                    onChange={(e) => setPetForm({ ...petForm, breed: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">年齡或出生日期</label>
+                  <input
+                    type="text"
+                    placeholder="如：1 歲"
+                    value={petForm.age}
+                    onChange={(e) => setPetForm({ ...petForm, age: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">當前體重 (kg - 必填)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="如：4.3"
+                    value={petForm.weight}
+                    onChange={(e) => setPetForm({ ...petForm, weight: e.target.value })}
+                    className="w-full bg-slate-100 border-2 border-amber-300 rounded-xl px-3 py-2 text-sm font-bold text-slate-800"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">生理狀態 (計算關鍵)</label>
+                  <select
+                    value={petForm.status}
+                    onChange={(e) => setPetForm({ ...petForm, status: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                  >
+                    <option value="neutered">已結紮成年 ✂️</option>
+                    <option value="intact">未結紮成年 🌸</option>
+                    <option value="weight_loss">減重計畫中 ⚖️</option>
+                    <option value="young">幼年快速生長期 🍼</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 實時公式演算卡片 */}
+              {petForm.weight && (
+                <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-3.5 space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-extrabold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 fill-current" />
+                      <span>AAFCO / WSAVA 獸醫公式即時推薦</span>
+                    </span>
+                    <button 
+                      type="button" 
+                      onClick={applyScientificValues}
+                      className="text-[10px] font-bold text-amber-600 hover:text-amber-800 underline flex items-center gap-0.5"
+                    >
+                      一鍵套用
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 text-center pt-1 gap-2 divide-x divide-amber-200">
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase">基礎代謝 RER</p>
+                      <p className="text-xs font-black text-slate-700">{scientificPreview.rer} kcal</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-amber-600 font-bold uppercase">建議熱量 DER</p>
+                      <p className="text-xs font-black text-slate-700">{scientificPreview.calories} kcal</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-sky-600 font-bold uppercase">每日飲水</p>
+                      <p className="text-xs font-black text-slate-700">{scientificPreview.water} ml</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">每日熱量目標 (kcal)</label>
+                  <input
+                    type="number"
+                    placeholder="不填將採用 AI 推薦值"
+                    value={petForm.targetCalories}
+                    onChange={(e) => setPetForm({ ...petForm, targetCalories: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 mb-1">建議日飲水 (ml)</label>
+                  <input
+                    type="number"
+                    placeholder="不填將採用 AI 推薦值"
+                    value={petForm.targetWater}
+                    onChange={(e) => setPetForm({ ...petForm, targetWater: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddPetModal(false)}
+                  className="flex-1 bg-slate-100 text-slate-700 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-200"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 bg-slate-900 text-white py-2.5 rounded-xl text-xs font-bold hover:bg-slate-800 shadow-md"
+                >
+                  迎入新成員
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
